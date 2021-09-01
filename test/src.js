@@ -16,11 +16,14 @@ const console = require("better-console");
 args_1.getArgs();
 const location = path_1.join(__dirname, "./");
 Promise.all(fs_1.readdirSync(location)
-    .map(name => path_1.join(location, name))
-    .filter(path => fs_1.lstatSync(path).isDirectory())
-    .map(directory => {
+    .map((name) => path_1.join(location, name))
+    .filter((path) => fs_1.lstatSync(path).isDirectory())
+    .map((directory) => {
     const args = yargs_1.default.parse(["--config", path_1.join(directory, "barrelsby.json")]);
-    args.directory = path_1.join(directory, args.directory);
+    // args.directory is expected to be a string array, so combine the first directory in the test config
+    // with the current directory, as pass that back as an array
+    const firstDir = args.directory[0];
+    args.directory = [path_1.join(directory, firstDir)];
     return fs_extra_1.copy(path_1.join(directory, "input"), path_1.join(directory, "output")).then(() => {
         bin_1.default(args);
         console.log(`Running integration test in directory ${directory}`);
@@ -33,17 +36,17 @@ Promise.all(fs_1.readdirSync(location)
             compareFileAsync: dir_compare_1.default.fileCompareHandlers.lineBasedFileCompare
                 .compareAsync,
             compareFileSync: dir_compare_1.default.fileCompareHandlers.lineBasedFileCompare.compareSync,
-            ignoreLineEnding: true
+            ignoreLineEnding: true,
         });
         if (comparison.differences && comparison.diffSet) {
             comparison.diffSet
-                .filter(diff => diff.state !== "equal")
-                .map(diff => {
+                .filter((diff) => diff.state !== "equal")
+                .map((diff) => {
                 const state = {
                     distinct: "<>",
                     equal: "==",
                     left: "->",
-                    right: "<-"
+                    right: "<-",
                 }[diff.state];
                 const name1 = diff.name1 ? diff.name1 : "";
                 const name2 = diff.name2 ? diff.name2 : "";
@@ -59,4 +62,4 @@ Promise.all(fs_1.readdirSync(location)
         console.log();
         return comparison.differences;
     });
-})).then(differences => process.exit(differences.filter(differenceCount => differenceCount > 0).length));
+})).then((differences) => process.exit(differences.filter((differenceCount) => differenceCount > 0).length));

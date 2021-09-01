@@ -16,11 +16,14 @@ getArgs();
 const location = join(__dirname, "./");
 Promise.all(
   readdirSync(location)
-    .map(name => join(location, name))
-    .filter(path => lstatSync(path).isDirectory())
-    .map(directory => {
+    .map((name) => join(location, name))
+    .filter((path) => lstatSync(path).isDirectory())
+    .map((directory) => {
       const args = Yargs.parse(["--config", join(directory, "barrelsby.json")]);
-      args.directory = join(directory, args.directory as string);
+      // args.directory is expected to be a string array, so combine the first directory in the test config
+      // with the current directory, as pass that back as an array
+      const firstDir = (args.directory as string[])[0];
+      args.directory = [join(directory, firstDir)];
       return copy(join(directory, "input"), join(directory, "output")).then(
         () => {
           Barrelsby(args as any);
@@ -39,18 +42,18 @@ Promise.all(
                   .compareAsync,
               compareFileSync:
                 dirCompare.fileCompareHandlers.lineBasedFileCompare.compareSync,
-              ignoreLineEnding: true
+              ignoreLineEnding: true,
             }
           );
           if (comparison.differences && comparison.diffSet) {
             comparison.diffSet
-              .filter(diff => diff.state !== "equal")
-              .map(diff => {
+              .filter((diff) => diff.state !== "equal")
+              .map((diff) => {
                 const state = ({
                   distinct: "<>",
                   equal: "==",
                   left: "->",
-                  right: "<-"
+                  right: "<-",
                 } as any)[diff.state];
                 const name1 = diff.name1 ? diff.name1 : "";
                 const name2 = diff.name2 ? diff.name2 : "";
@@ -71,8 +74,8 @@ Promise.all(
         }
       );
     })
-).then(differences =>
+).then((differences) =>
   process.exit(
-    differences.filter(differenceCount => differenceCount > 0).length
+    differences.filter((differenceCount) => differenceCount > 0).length
   )
 );
