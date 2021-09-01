@@ -21,12 +21,20 @@ function getModules(
   const files: Location[] = ([] as Location[]).concat(directory.files);
   if (!local) {
     directory.directories.forEach((childDirectory: Directory) => {
+      if (
+        childDirectory.name === "dist" ||
+        childDirectory.name === "node_modules"
+      ) {
+        return;
+      }
       // Recurse.
       files.push(...getModules(childDirectory, logger, local));
     });
   }
   // Only return files that look like TypeScript modules.
-  return files.filter((file: Location) => file.name.match(isTypeScriptFile));
+  return files.filter((file: Location) => {
+    return file.name.match(isTypeScriptFile);
+  });
 }
 
 function buildFilters(include: string[], exclude: string[]): Filters {
@@ -36,7 +44,7 @@ function buildFilters(include: string[], exclude: string[]): Filters {
   }
   return {
     blacklists: buildRegexList(exclude),
-    whitelists: buildRegexList(include)
+    whitelists: buildRegexList(include),
   };
 }
 

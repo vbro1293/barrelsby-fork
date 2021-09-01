@@ -12,12 +12,19 @@ function getModules(directory, logger, local) {
     const files = [].concat(directory.files);
     if (!local) {
         directory.directories.forEach((childDirectory) => {
+            console.log(">>>>>>> ~ file: modules.ts ~ line 24 ~ directory.directories.forEach ~ childDirectory", childDirectory);
+            if (childDirectory.name === "alpha" ||
+                childDirectory.name === "node_modules") {
+                return;
+            }
             // Recurse.
             files.push(...getModules(childDirectory, logger, local));
         });
     }
     // Only return files that look like TypeScript modules.
-    return files.filter((file) => file.name.match(utilities_1.isTypeScriptFile));
+    return files.filter((file) => {
+        return file.name.match(utilities_1.isTypeScriptFile);
+    });
 }
 function buildFilters(include, exclude) {
     // Filter a set of modules down to those matching the include/exclude rules.
